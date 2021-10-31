@@ -35,7 +35,7 @@ export function TasksList({
         return (
           <ItemWrapper index={index}>
             <TaskItem
-              taskList={item}
+              task={item}
               key={index}
               removeTask={() => removeTask(item.id)}
               toggleTaskDone={() => toggleTaskDone(item.id)}

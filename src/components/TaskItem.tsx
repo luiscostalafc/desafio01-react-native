@@ -1,28 +1,60 @@
-import React from "react";
-import { Text, TouchableOpacity, View, Image, StyleSheet } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Text,
+  TouchableOpacity,
+  View,
+  Image,
+  StyleSheet,
+  TextInput,
+} from "react-native";
 import Icon from "react-native-vector-icons/Feather";
-import trashIcon from "../assets/icons/trash/trash.png";
 import { EditTaskArgs } from "../pages/Home";
+import { Task } from "./TasksList";
 
-export interface Task {
-  id: number;
-  title: string;
-  done: boolean;
-}
+import trashIcon from "../assets/icons/trash/trash.png";
+import editIcon from "../assets/icons/edit/edit.png";
 
 interface TaskItemProps {
-  taskList: Task;
+  task: Task | any;
   removeTask: (id: number) => void;
   toggleTaskDone: (id: number) => void;
   editTask: ({ taskId, taskNewTitle }: EditTaskArgs) => void;
 }
 
 export function TaskItem({
-  taskList,
+  task,
   removeTask,
   toggleTaskDone,
   editTask,
 }: TaskItemProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [taskNewTitleValue, setTaskNewTitleValue] = useState(task);
+  const textInputRef = useRef<TextInput>(null);
+
+  function handleStartEditing() {
+    setIsEditing(true);
+  }
+
+  function handleCancelEditing() {
+    setTaskNewTitleValue(task.title);
+    setIsEditing(false);
+  }
+
+  function handleSubmitEditing() {
+    editTask({ taskId: task.id, taskNewTitle: taskNewTitleValue });
+    setIsEditing(false);
+  }
+
+  useEffect(() => {
+    if (textInputRef.current) {
+      if (isEditing) {
+        textInputRef.current.focus();
+      } else {
+        textInputRef.current.blur();
+      }
+    }
+  }, [isEditing]);
+
   return (
     <View
       style={{
@@ -33,30 +65,42 @@ export function TaskItem({
     >
       <View>
         <TouchableOpacity
-          testID={`button-${taskList.id}`}
           activeOpacity={0.7}
           style={styles.taskButton}
-          onPress={() => toggleTaskDone(taskList?.id)}
+          onPress={() => toggleTaskDone(task?.id)}
         >
-          <View
-            testID={`marker-${taskList.id}`}
-            style={taskList?.done ? styles.taskMarkerDone : styles.taskMarker}
-          >
-            {taskList?.done && <Icon name="check" size={12} color="#FFF" />}
+          <View style={task?.done ? styles.taskMarkerDone : styles.taskMarker}>
+            {task?.done && <Icon name="check" size={12} color="#FFF" />}
           </View>
 
-          <Text style={taskList?.done ? styles.taskTextDone : styles.taskText}>
-            {taskList?.title}
-          </Text>
+          <TextInput
+            value={taskNewTitleValue}
+            onChangeText={setTaskNewTitleValue}
+            editable={isEditing}
+            onSubmitEditing={handleSubmitEditing}
+            style={task?.done ? styles.taskTextDone : styles.taskText}
+            ref={textInputRef}
+          />
         </TouchableOpacity>
       </View>
 
+      <View>
+        {isEditing ? (
+          <TouchableOpacity onPress={handleCancelEditing}>
+            <Icon name="x" size={24} color="#b2b2b2" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={handleStartEditing}>
+            <Image source={editIcon} />
+          </TouchableOpacity>
+        )}
+      </View>
+
       <TouchableOpacity
-        testID={`trash-${taskList.id}`}
-        style={{ paddingHorizontal: 24 }}
-        onPress={() => removeTask(taskList.id)}
+        onPress={() => removeTask(task.id)}
+        disabled={isEditing}
       >
-        <Image source={trashIcon} />
+        <Image source={trashIcon} style={{ opacity: isEditing ? 0.2 : 1 }} />
       </TouchableOpacity>
     </View>
   );
